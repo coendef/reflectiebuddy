@@ -5,11 +5,20 @@ import { Badge } from '@/components/Badge'
 
 interface Message {
   id: string
-  type: 'user' | 'bot'
+  type: 'user' | 'bot' | 'badge'
   content: string
   timestamp: Date
   reflectionPhase?: string
   emotion?: string
+  badge?: BadgeData
+}
+
+interface BadgeData {
+  id: string
+  name: string
+  description: string
+  icon: string
+  color: string
 }
 
 const REFLECTION_PHASES = {
@@ -75,6 +84,73 @@ const REFLECTION_PHASES = {
   }
 }
 
+const AVAILABLE_BADGES = [
+  {
+    id: 'first_reflection',
+    name: 'Eerste Stappen',
+    description: 'Je eerste reflectie voltooid!',
+    icon: '🌱',
+    color: 'green',
+    trigger: 'first_message'
+  },
+  {
+    id: 'emotion_explorer',
+    name: 'Emotie Ontdekkingsreiziger',
+    description: 'Je hebt je gevoelens erkend en benoemd',
+    icon: '💭',
+    color: 'blue',
+    trigger: 'feelings_phase'
+  },
+  {
+    id: 'deep_thinker',
+    name: 'Diepe Denker',
+    description: 'Je hebt diepgaand geanalyseerd',
+    icon: '🧠',
+    color: 'purple',
+    trigger: 'analysis_phase'
+  },
+  {
+    id: 'action_hero',
+    name: 'Actie Held',
+    description: 'Concrete actiepunten geformuleerd!',
+    icon: '🎯',
+    color: 'red',
+    trigger: 'action_phase'
+  },
+  {
+    id: 'full_cycle',
+    name: 'Volledige Cyclus',
+    description: 'Een complete Gibbs cyclus doorlopen!',
+    icon: '🔄',
+    color: 'yellow',
+    trigger: 'complete_cycle'
+  },
+  {
+    id: 'empathy_master',
+    name: 'Empathie Meester',
+    description: 'Je toont begrip voor leerlingen',
+    icon: '❤️',
+    color: 'pink',
+    trigger: 'empathy_detected'
+  },
+  {
+    id: 'theory_connector',
+    name: 'Theorie Verbinder',
+    description: 'Je koppelt ervaring aan theorie',
+    icon: '🔗',
+    color: 'teal',
+    trigger: 'theory_mentioned'
+  },
+  {
+    id: 'growth_mindset',
+    name: 'Groeimindset',
+    description: 'Je leert van uitdagingen!',
+    icon: '📈',
+    color: 'indigo',
+    trigger: 'growth_detected'
+  }
+]
+
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -89,6 +165,8 @@ export default function ChatInterface() {
   const [isLoading, setIsLoading] = useState(false)
   const [currentPhase, setCurrentPhase] = useState<keyof typeof REFLECTION_PHASES>('description')
   const [completedPhases, setCompletedPhases] = useState<string[]>([])
+  const [earnedBadges, setEarnedBadges] = useState<string[]>([])
+  const [messageCount, setMessageCount] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -116,10 +194,78 @@ export default function ChatInterface() {
     return 'neutral'
   }
 
+  const checkForBadgeTriggers = (userMessage: string, phase: keyof typeof REFLECTION_PHASES) => {
+    const newBadges: BadgeData[] = []
+    
+    // First message badge
+    if (messageCount === 0 && !earnedBadges.includes('first_reflection')) {
+      const badge = AVAILABLE_BADGES.find(b => b.id === 'first_reflection')
+      if (badge) newBadges.push(badge)
+    }
+
+    // Phase-specific badges
+    if (phase === 'feelings' && !earnedBadges.includes('emotion_explorer')) {
+      const badge = AVAILABLE_BADGES.find(b => b.id === 'emotion_explorer')
+      if (badge) newBadges.push(badge)
+    }
+
+    if (phase === 'analysis' && !earnedBadges.includes('deep_thinker')) {
+      const badge = AVAILABLE_BADGES.find(b => b.id === 'deep_thinker')
+      if (badge) newBadges.push(badge)
+    }
+
+    if (phase === 'action' && !earnedBadges.includes('action_hero')) {
+      const badge = AVAILABLE_BADGES.find(b => b.id === 'action_hero')
+      if (badge) newBadges.push(badge)
+    }
+
+    // Content-based badges
+    const lowerMessage = userMessage.toLowerCase()
+    
+    if ((lowerMessage.includes('leerling') || lowerMessage.includes('kind')) && 
+        (lowerMessage.includes('begrijp') || lowerMessage.includes('snap')) && 
+        !earnedBadges.includes('empathy_master')) {
+      const badge = AVAILABLE_BADGES.find(b => b.id === 'empathy_master')
+      if (badge) newBadges.push(badge)
+    }
+
+    if ((lowerMessage.includes('theorie') || lowerMessage.includes('model') || lowerMessage.includes('methode')) && 
+        !earnedBadges.includes('theory_connector')) {
+      const badge = AVAILABLE_BADGES.find(b => b.id === 'theory_connector')
+      if (badge) newBadges.push(badge)
+    }
+
+    if ((lowerMessage.includes('leren') || lowerMessage.includes('groeien') || lowerMessage.includes('ontwikkelen')) && 
+        !earnedBadges.includes('growth_mindset')) {
+      const badge = AVAILABLE_BADGES.find(b => b.id === 'growth_mindset')
+      if (badge) newBadges.push(badge)
+    }
+
+    // Complete cycle badge
+    if (completedPhases.length === 5 && !earnedBadges.includes('full_cycle')) {
+      const badge = AVAILABLE_BADGES.find(b => b.id === 'full_cycle')
+      if (badge) newBadges.push(badge)
+    }
+
+    return newBadges
+  }
+
+  const addBadgeMessage = (badge: BadgeData) => {
+    const badgeMessage: Message = {
+      id: `badge-${Date.now()}`,
+      type: 'badge',
+      content: `🎉 Badge behaald: ${badge.name}!`,
+      timestamp: new Date(),
+      badge: badge
+    }
+    
+    setMessages(prev => [...prev, badgeMessage])
+    setEarnedBadges(prev => [...prev, badge.id])
+  }
+
   const generateBotResponse = async (userMessage: string, phase: keyof typeof REFLECTION_PHASES) => {
     const emotion = detectEmotion(userMessage)
     
-    // Simulate API call to Gemini
     const prompt = `Je bent een empathische AI-begeleider voor pabo-studenten. 
     
 Huidige reflectiefase: ${REFLECTION_PHASES[phase].name}
@@ -195,7 +341,11 @@ Antwoord in maximaal 3 zinnen.`
     setMessages(prev => [...prev, userMessage])
     setInputMessage('')
     setIsLoading(true)
+    setMessageCount(prev => prev + 1)
 
+    // Check for badge triggers
+    const newBadges = checkForBadgeTriggers(inputMessage, currentPhase)
+    
     // Generate bot response
     const botResponse = await generateBotResponse(inputMessage, currentPhase)
     
@@ -218,6 +368,11 @@ Antwoord in maximaal 3 zinnen.`
     setTimeout(() => {
       setMessages(prev => [...prev, botMessage])
       setIsLoading(false)
+      
+      // Add badge messages after bot response
+      newBadges.forEach((badge, index) => {
+        setTimeout(() => addBadgeMessage(badge), (index + 1) * 1000)
+      })
     }, 1000)
   }
 
@@ -232,7 +387,27 @@ Antwoord in maximaal 3 zinnen.`
     <div className="max-w-4xl mx-auto">
       {/* Reflection Progress */}
       <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 mb-6 border border-blue-100">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Reflectie Voortgang</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">Reflectie Voortgang</h3>
+          {earnedBadges.length > 0 && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">Badges:</span>
+              <div className="flex space-x-1">
+                {earnedBadges.slice(-3).map(badgeId => {
+                  const badge = AVAILABLE_BADGES.find(b => b.id === badgeId)
+                  return badge ? (
+                    <span key={badgeId} className="text-lg" title={badge.name}>
+                      {badge.icon}
+                    </span>
+                  ) : null
+                })}
+                {earnedBadges.length > 3 && (
+                  <span className="text-sm text-gray-500">+{earnedBadges.length - 3}</span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {Object.entries(REFLECTION_PHASES).map(([key, phase]) => (
             <div
@@ -278,25 +453,38 @@ Antwoord in maximaal 3 zinnen.`
         {/* Messages */}
         <div className="h-96 overflow-y-auto p-4 space-y-4">
           {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
-                  message.type === 'user'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-800'
-                }`}
-              >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                <p className="text-xs opacity-70 mt-1">
-                  {message.timestamp.toLocaleTimeString('nl-NL', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  })}
-                </p>
-              </div>
+            <div key={message.id}>
+              {message.type === 'badge' ? (
+                <div className="flex justify-center">
+                  <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-6 py-3 rounded-full shadow-lg animate-bounce">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-2xl">{message.badge?.icon}</span>
+                      <div>
+                        <div className="font-bold text-sm">{message.badge?.name}</div>
+                        <div className="text-xs opacity-90">{message.badge?.description}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
+                      message.type === 'user'
+                        ? 'bg-blue-500 text-white message-user'
+                        : 'bg-gray-100 text-gray-800 message-bot'
+                    }`}
+                  >
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    <p className="text-xs opacity-70 mt-1">
+                      {message.timestamp.toLocaleTimeString('nl-NL', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
           

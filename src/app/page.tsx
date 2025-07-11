@@ -3,10 +3,9 @@
 import { useState } from 'react'
 import ChatInterface from '@/components/ChatInterface'
 import ReflectionGuide from '@/components/ReflectionGuide'
-import UserProgress from '@/components/UserProgress'
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'chat' | 'guide' | 'progress'>('chat')
+  const [activeTab, setActiveTab] = useState<'chat' | 'guide'>('chat')
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-teal-50">
@@ -46,16 +45,6 @@ export default function Home() {
               >
                 📚 Reflectie Uitleg
               </button>
-              <button
-                onClick={() => setActiveTab('progress')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  activeTab === 'progress'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-blue-600'
-                }`}
-              >
-                🏆 Voortgang
-              </button>
             </nav>
           </div>
         </div>
@@ -65,7 +54,6 @@ export default function Home() {
       <main className="max-w-6xl mx-auto px-4 py-6">
         {activeTab === 'chat' && <ChatInterface />}
         {activeTab === 'guide' && <ReflectionGuide />}
-        {activeTab === 'progress' && <UserProgress />}
       </main>
 
       {/* Footer */}
