@@ -341,7 +341,13 @@ Antwoord in maximaal 3 zinnen.`
     setMessages(prev => [...prev, userMessage])
     setInputMessage('')
     setIsLoading(true)
-    setMessageCount(prev => prev + 1)
+    const newMessageCount = messageCount + 1
+    setMessageCount(newMessageCount)
+    
+    // Show Word export button after 3 messages
+    if (newMessageCount >= 3) {
+      setShowWordExport(true)
+    }
 
     // Check for badge triggers
     const newBadges = checkForBadgeTriggers(inputMessage, currentPhase)
@@ -376,6 +382,102 @@ Antwoord in maximaal 3 zinnen.`
     }, 1000)
   }
 
+  const exportToWord = async () => {
+    try {
+      // Dynamic import to avoid SSR issues
+      const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import('docx')
+      
+      // Filter out badge messages for cleaner export
+      const chatMessages = messages.filter(msg => msg.type !== 'badge')
+      
+      // Create document sections
+      const children = [
+        new Paragraph({
+          text: "Reflectie Gesprek - Reflectie-Buddy",
+          heading: HeadingLevel.TITLE,
+        }),
+        new Paragraph({
+          text: `Datum: ${new Date().toLocaleDateString('nl-NL')}`,
+          spacing: { after: 400 }
+        }),
+        new Paragraph({
+          text: "Gespreksverlauf:",
+          heading: HeadingLevel.HEADING_1,
+          spacing: { before: 400, after: 200 }
+        })
+      ]
+      
+      // Add each message to the document
+      chatMessages.forEach((message, index) => {
+        const isUser = message.type === 'user'
+        const speaker = isUser ? 'Student' : 'Reflectie-Buddy'
+        const time = message.timestamp.toLocaleTimeString('nl-NL', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        })
+        
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `${speaker} (${time}):`,
+                bold: true,
+                color: isUser ? "2563eb" : "059669"
+              })
+            ],
+            spacing: { before: 200 }
+          }),
+          new Paragraph({
+            text: message.content,
+            spacing: { after: 200 }
+          })
+        )
+      })
+      
+      // Add reflection summary
+      children.push(
+        new Paragraph({
+          text: "Reflectie Samenvatting:",
+          heading: HeadingLevel.HEADING_1,
+          spacing: { before: 600, after: 200 }
+        }),
+        new Paragraph({
+          text: `Doorlopen fasen: ${completedPhases.length}/6`,
+          spacing: { after: 100 }
+        }),
+        new Paragraph({
+          text: `Behaalde badges: ${earnedBadges.length}`,
+          spacing: { after: 100 }
+        }),
+        new Paragraph({
+          text: `Totaal berichten: ${chatMessages.length}`,
+          spacing: { after: 400 }
+        })
+      )
+      
+      // Create and download document
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: children
+        }]
+      })
+      
+      const blob = await Packer.toBlob(doc)
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `Reflectie-${new Date().toLocaleDateString('nl-NL').replace(/\//g, '-')}.docx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+    } catch (error) {
+      console.error('Error exporting to Word:', error)
+      alert('Er is een fout opgetreden bij het exporteren naar Word.')
+    }
+  }
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
