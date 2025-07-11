@@ -1,15 +1,16 @@
 {
-  "name": "gemini-chatbot",
+  "name": "reflectie-buddy",
   "version": "0.1.0",
   "private": true,
-  "description": "Een Next.js template met Gemini AI integratie, geoptimaliseerd voor Bolt + Netlify deployment",
+  "description": "Een interactieve reflectie-tool voor pabo-studenten met AI-begeleiding",
   "keywords": [
     "nextjs",
     "gemini",
     "ai",
-    "chatbot",
-    "netlify",
-    "bolt",
+    "reflectie",
+    "pabo",
+    "onderwijs",
+    "gibbs",
     "typescript"
   ],
   "author": "Tom Naberink",
@@ -26,17 +27,12 @@
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
     "@netlify/plugin-nextjs": "^4.41.3",
-    "docx": "^9.5.0",
-    "fs": "^0.0.1-security",
-    "mammoth": "^1.9.1",
     "next": "15.3.3",
-    "pdf-parse": "^1.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "autoprefixer": "^10.4.20",
