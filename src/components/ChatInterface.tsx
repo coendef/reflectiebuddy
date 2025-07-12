@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { Document, Packer, Paragraph, TextRun } from 'docx'
 import { Badge } from '@/components/Badge'
 
 interface Message {
@@ -171,6 +172,110 @@ export default function ChatInterface() {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const exportToWord = async () => {
+    try {
+      // Filter out badge messages for cleaner export
+      const chatMessages = messages.filter(msg => msg.type !== 'badge')
+      
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Reflectie-Buddy Gesprek",
+                  bold: true,
+                  size: 32,
+                }),
+              ],
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Datum: ${new Date().toLocaleDateString('nl-NL')}`,
+                  size: 24,
+                }),
+              ],
+            }),
+            new Paragraph({ text: "" }), // Empty line
+            
+            // Add all chat messages
+            ...chatMessages.map(message => 
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `[${message.timestamp.toLocaleTimeString('nl-NL')}] `,
+                    color: "666666",
+                    size: 20,
+                  }),
+                  new TextRun({
+                    text: message.type === 'user' ? 'Student: ' : 'Reflectie-Buddy: ',
+                    bold: true,
+                    color: message.type === 'user' ? '2563eb' : '059669',
+                    size: 22,
+                  }),
+                  new TextRun({
+                    text: message.content,
+                    size: 22,
+                  }),
+                ],
+              })
+            ),
+            
+            new Paragraph({ text: "" }), // Empty line
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Reflectie Samenvatting:",
+                  bold: true,
+                  size: 28,
+                }),
+              ],
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Voltooide fasen: ${completedPhases.length}/6`,
+                  size: 22,
+                }),
+              ],
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Behaalde badges: ${earnedBadges.length}`,
+                  size: 22,
+                }),
+              ],
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Aantal berichten: ${chatMessages.length}`,
+                  size: 22,
+                }),
+              ],
+            }),
+          ],
+        }],
+      })
+
+      const blob = await Packer.toBlob(doc)
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `reflectie-gesprek-${new Date().toISOString().split('T')[0]}.docx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error exporting to Word:', error)
+      alert('Er is een fout opgetreden bij het exporteren. Probeer het opnieuw.')
+    }
   }
 
   useEffect(() => {
