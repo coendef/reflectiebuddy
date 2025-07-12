@@ -546,5 +546,3 @@ Antwoord in maximaal 3 zinnen.`
     </div>
   )
 }
-
-export default ChatInterface
