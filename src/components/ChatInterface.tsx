@@ -525,6 +525,24 @@ Antwoord in maximaal 3 zinnen.`
         </div>
       </div>
 
+      {/* Word Export Section - appears after 3 messages */}
+      {messageCount >= 3 && (
+        <div className="mt-4 bg-white/80 backdrop-blur-sm rounded-xl border border-blue-100 p-4">
+          <div className="text-center">
+            <p className="text-sm text-gray-600 mb-3">
+              Vanaf nu kun je jouw gesprek downloaden. Ga verder totdat je klaar bent.
+            </p>
+            <button
+              onClick={exportToWord}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2 mx-auto"
+            >
+              <span>📄</span>
+              <span>Downloaden als Word-bestand</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Quick Tips */}
       <div className="mt-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 border border-green-100">
         <h4 className="font-semibold text-gray-800 mb-3">💡 Reflectie Tips</h4>
